@@ -1,0 +1,6 @@
+smoke_test 5 0.067838
+test_mppi_basic 5 0.0695698
+test_mppi_api 4 0.0833955
+test_mppi_shift 3 0.114595
+test_mppi_reset 2 0.171396
+---

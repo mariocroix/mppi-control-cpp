@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmppi.a CMakeFiles/mppi.dir/src/dummy.cpp.o CMakeFiles/mppi.dir/src/MPPIController.cpp.o
+/usr/bin/ranlib libmppi.a

@@ -1,0 +1,86 @@
+Start testing: Apr 16 15:26 +04
+----------------------------------------------------------
+1/5 Testing: smoke_test
+1/5 Test: smoke_test
+Command: "/Users/mari/Desktop/mppi_cpp/build/mppi_tests"
+Directory: /Users/mari/Desktop/mppi_cpp/build
+"smoke_test" start time: Apr 16 15:26 +04
+Output:
+----------------------------------------------------------
+Running smoke test...
+Smoke test passed.
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"smoke_test" end time: Apr 16 15:26 +04
+"smoke_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/5 Testing: test_mppi_basic
+2/5 Test: test_mppi_basic
+Command: "/Users/mari/Desktop/mppi_cpp/build/test_mppi_basic"
+Directory: /Users/mari/Desktop/mppi_cpp/build
+"test_mppi_basic" start time: Apr 16 15:26 +04
+Output:
+----------------------------------------------------------
+Initial cost: 41
+Final cost: 0.0646166
+test_mppi_basic passed
+<end of output>
+Test time =   0.35 sec
+----------------------------------------------------------
+Test Passed.
+"test_mppi_basic" end time: Apr 16 15:26 +04
+"test_mppi_basic" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/5 Testing: test_mppi_api
+3/5 Test: test_mppi_api
+Command: "/Users/mari/Desktop/mppi_cpp/build/test_mppi_api"
+Directory: /Users/mari/Desktop/mppi_cpp/build
+"test_mppi_api" start time: Apr 16 15:26 +04
+Output:
+----------------------------------------------------------
+test_mppi_api passed
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"test_mppi_api" end time: Apr 16 15:26 +04
+"test_mppi_api" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/5 Testing: test_mppi_shift
+4/5 Test: test_mppi_shift
+Command: "/Users/mari/Desktop/mppi_cpp/build/test_mppi_shift"
+Directory: /Users/mari/Desktop/mppi_cpp/build
+"test_mppi_shift" start time: Apr 16 15:26 +04
+Output:
+----------------------------------------------------------
+test_mppi_shift passed
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"test_mppi_shift" end time: Apr 16 15:26 +04
+"test_mppi_shift" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/5 Testing: test_mppi_reset
+5/5 Test: test_mppi_reset
+Command: "/Users/mari/Desktop/mppi_cpp/build/test_mppi_reset"
+Directory: /Users/mari/Desktop/mppi_cpp/build
+"test_mppi_reset" start time: Apr 16 15:26 +04
+Output:
+----------------------------------------------------------
+test_mppi_reset passed
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"test_mppi_reset" end time: Apr 16 15:26 +04
+"test_mppi_reset" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Apr 16 15:26 +04
