@@ -23,6 +23,7 @@ find_package(Eigen3 REQUIRED)
 add_library(mppi
         src/dummy.cpp
         src/MPPIController.cpp
+        src/SMPPIController.cpp
 )
 
 target_include_directories(mppi
@@ -43,13 +44,20 @@ target_link_libraries(mppi_demo
 
 )
 
-# ---- Pendulum ----
-
+# ---- Pendulum Examples----
 add_executable(pendulum_example
         examples/pendulum_example.cpp
 )
 
 target_link_libraries(pendulum_example
+        PRIVATE mppi
+)
+
+add_executable(smppi_pendulum_example
+        examples/smppi_pendulum_example.cpp
+)
+
+target_link_libraries(smppi_pendulum_example
         PRIVATE mppi
 )
 
@@ -105,4 +113,48 @@ if(MPPI_BUILD_TESTS)
     )
 
     add_test(NAME test_mppi_reset COMMAND test_mppi_reset)
+
+    add_executable(test_mppi_seed
+            tests/test_mppi_seed.cpp
+    )
+    target_link_libraries(test_mppi_seed PRIVATE mppi)
+    add_test(NAME test_mppi_seed COMMAND test_mppi_seed)
+
+    add_executable(test_mppi_bounds
+            tests/test_mppi_bounds.cpp
+    )
+    target_link_libraries(test_mppi_bounds PRIVATE mppi)
+    add_test(NAME test_mppi_bounds COMMAND test_mppi_bounds)
+
+    add_executable(test_mppi_1d
+            tests/test_mppi_1d.cpp
+    )
+    target_link_libraries(test_mppi_1d PRIVATE mppi)
+    add_test(NAME test_mppi_1d COMMAND test_mppi_1d)
+
+    add_executable(test_mppi_terminal
+            tests/test_mppi_terminal.cpp
+    )
+    target_link_libraries(test_mppi_terminal PRIVATE mppi)
+    add_test(NAME test_mppi_terminal COMMAND test_mppi_terminal)
+
+    add_executable(test_smppi_basic
+            tests/test_smppi_basic.cpp
+    )
+
+    target_link_libraries(test_smppi_basic
+            PRIVATE mppi
+    )
+
+    add_test(NAME test_smppi_basic COMMAND test_smppi_basic)
+
+    add_executable(test_smppi_smoothness
+            tests/test_smppi_smoothness.cpp
+    )
+
+    target_link_libraries(test_smppi_smoothness
+            PRIVATE mppi
+    )
+
+    add_test(NAME test_smppi_smoothness COMMAND test_smppi_smoothness)
 endif()

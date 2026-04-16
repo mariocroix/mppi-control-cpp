@@ -20,15 +20,17 @@ namespace mppi {
             const TerminalCost* terminalCost = nullptr
         );
 
-        Vector command(const Vector& state);
-        void reset();
+        virtual ~MPPIController() = default;
+
+        virtual Vector command(const Vector& state);
+        virtual void reset();
 
         const Matrix& getActionSequence() const;
         void shiftNominalTrajectory();
         void changeHorizon(int newHorizon);
         std::string getParams() const;
 
-    private:
+    protected:
         Config cfg_;
         const Dynamics& dynamics_;
         const RunningCost& runningCost_;
