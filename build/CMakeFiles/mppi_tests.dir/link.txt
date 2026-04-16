@@ -1,1 +1,0 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/mppi_tests.dir/tests/test_smoke.cpp.o -o mppi_tests  libmppi.a /opt/homebrew/opt/libomp/lib/libomp.dylib
