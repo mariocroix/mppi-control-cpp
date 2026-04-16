@@ -8,20 +8,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MPPI_BUILD_TESTS "Build tests" ON)
 
-# ---- OpenMP fix for macOS ----
+# macOS OpenMP setup (Homebrew libomp)
 if(APPLE)
     set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
     set(OpenMP_CXX_LIB_NAMES "omp")
-    set(OpenMP_omp_LIBRARY /opt/homebrew/opt/libomp/lib/libomp.dylib)
-    include_directories(/opt/homebrew/opt/libomp/include)
+    set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/libomp/lib/libomp.dylib")
+    include_directories("/opt/homebrew/opt/libomp/include")
 endif()
 
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-# ---- Library ----
+# ------------------------------------------------------------------------------
+# Library
+# ------------------------------------------------------------------------------
+
 add_library(mppi
-        src/dummy.cpp
         src/MPPIController.cpp
         src/SMPPIController.cpp
 )
@@ -31,130 +33,52 @@ target_include_directories(mppi
 )
 
 target_link_libraries(mppi
-        PUBLIC OpenMP::OpenMP_CXX Eigen3::Eigen
+        PUBLIC
+        OpenMP::OpenMP_CXX
+        Eigen3::Eigen
 )
 
-# ---- Demo executable ----
+# ------------------------------------------------------------------------------
+# Examples / Demos
+# ------------------------------------------------------------------------------
+
 add_executable(mppi_demo
         src/main.cpp
 )
+target_link_libraries(mppi_demo PRIVATE mppi)
 
-target_link_libraries(mppi_demo
-        PRIVATE mppi
-
-)
-
-# ---- Pendulum Examples----
 add_executable(pendulum_example
         examples/pendulum_example.cpp
 )
-
-target_link_libraries(pendulum_example
-        PRIVATE mppi
-)
+target_link_libraries(pendulum_example PRIVATE mppi)
 
 add_executable(smppi_pendulum_example
         examples/smppi_pendulum_example.cpp
 )
+target_link_libraries(smppi_pendulum_example PRIVATE mppi)
 
-target_link_libraries(smppi_pendulum_example
-        PRIVATE mppi
-)
+# ------------------------------------------------------------------------------
+# Tests
+# ------------------------------------------------------------------------------
 
-# ---- Tests ----
 if(MPPI_BUILD_TESTS)
     enable_testing()
 
-    add_executable(mppi_tests
-            tests/test_smoke.cpp
-    )
+    function(add_mppi_test test_name test_source)
+        add_executable(${test_name} ${test_source})
+        target_link_libraries(${test_name} PRIVATE mppi)
+        add_test(NAME ${test_name} COMMAND ${test_name})
+    endfunction()
 
-    target_link_libraries(mppi_tests
-            PRIVATE mppi
-    )
-
-    add_test(NAME smoke_test COMMAND mppi_tests)
-
-    add_executable(test_mppi_basic
-            tests/test_mppi_basic.cpp
-    )
-
-    target_link_libraries(test_mppi_basic
-            PRIVATE mppi
-    )
-
-    add_test(NAME test_mppi_basic COMMAND test_mppi_basic)
-
-    add_executable(test_mppi_api
-            tests/test_mppi_api.cpp
-    )
-
-    target_link_libraries(test_mppi_api
-            PRIVATE mppi
-    )
-
-    add_test(NAME test_mppi_api COMMAND test_mppi_api)
-
-    add_executable(test_mppi_shift
-            tests/test_mppi_shift.cpp
-    )
-
-    target_link_libraries(test_mppi_shift
-            PRIVATE mppi
-    )
-    add_test(NAME test_mppi_shift COMMAND test_mppi_shift)
-
-    add_executable(test_mppi_reset
-            tests/test_mppi_reset.cpp
-    )
-
-    target_link_libraries(test_mppi_reset
-            PRIVATE mppi
-    )
-
-    add_test(NAME test_mppi_reset COMMAND test_mppi_reset)
-
-    add_executable(test_mppi_seed
-            tests/test_mppi_seed.cpp
-    )
-    target_link_libraries(test_mppi_seed PRIVATE mppi)
-    add_test(NAME test_mppi_seed COMMAND test_mppi_seed)
-
-    add_executable(test_mppi_bounds
-            tests/test_mppi_bounds.cpp
-    )
-    target_link_libraries(test_mppi_bounds PRIVATE mppi)
-    add_test(NAME test_mppi_bounds COMMAND test_mppi_bounds)
-
-    add_executable(test_mppi_1d
-            tests/test_mppi_1d.cpp
-    )
-    target_link_libraries(test_mppi_1d PRIVATE mppi)
-    add_test(NAME test_mppi_1d COMMAND test_mppi_1d)
-
-    add_executable(test_mppi_terminal
-            tests/test_mppi_terminal.cpp
-    )
-    target_link_libraries(test_mppi_terminal PRIVATE mppi)
-    add_test(NAME test_mppi_terminal COMMAND test_mppi_terminal)
-
-    add_executable(test_smppi_basic
-            tests/test_smppi_basic.cpp
-    )
-
-    target_link_libraries(test_smppi_basic
-            PRIVATE mppi
-    )
-
-    add_test(NAME test_smppi_basic COMMAND test_smppi_basic)
-
-    add_executable(test_smppi_smoothness
-            tests/test_smppi_smoothness.cpp
-    )
-
-    target_link_libraries(test_smppi_smoothness
-            PRIVATE mppi
-    )
-
-    add_test(NAME test_smppi_smoothness COMMAND test_smppi_smoothness)
+    add_mppi_test(smoke_test              tests/test_smoke.cpp)
+    add_mppi_test(test_mppi_basic         tests/test_mppi_basic.cpp)
+    add_mppi_test(test_mppi_api           tests/test_mppi_api.cpp)
+    add_mppi_test(test_mppi_shift         tests/test_mppi_shift.cpp)
+    add_mppi_test(test_mppi_reset         tests/test_mppi_reset.cpp)
+    add_mppi_test(test_mppi_seed          tests/test_mppi_seed.cpp)
+    add_mppi_test(test_mppi_bounds        tests/test_mppi_bounds.cpp)
+    add_mppi_test(test_mppi_1d            tests/test_mppi_1d.cpp)
+    add_mppi_test(test_mppi_terminal      tests/test_mppi_terminal.cpp)
+    add_mppi_test(test_smppi_basic        tests/test_smppi_basic.cpp)
+    add_mppi_test(test_smppi_smoothness   tests/test_smppi_smoothness.cpp)
 endif()
