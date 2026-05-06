@@ -67,7 +67,7 @@ for step in range(40):
 
 env.close()
 
-with open("cpp_api_gym_results.csv", "w", newline="") as f:
+with open("cpp_api_cpu_results.csv", "w", newline="") as f:
     writer = csv.DictWriter(
         f,
         fieldnames=["step", "action", "theta", "theta_dot", "cost", "step_time"]

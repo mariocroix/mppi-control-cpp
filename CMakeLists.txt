@@ -8,7 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MPPI_BUILD_TESTS "Build tests" ON)
 
+# ------------------------------------------------------------------------------
 # macOS OpenMP setup (Homebrew libomp)
+# ------------------------------------------------------------------------------
+
 if(APPLE)
     set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
     set(OpenMP_CXX_LIB_NAMES "omp")
@@ -40,29 +43,55 @@ target_link_libraries(mppi
 )
 
 # ------------------------------------------------------------------------------
+# Python bindings
+# ------------------------------------------------------------------------------
+
+pybind11_add_module(mppi_cpp
+        bindings/python_bindings.cpp
+)
+
+target_include_directories(mppi_cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(mppi_cpp
+        PRIVATE mppi
+)
+
+# ------------------------------------------------------------------------------
 # Examples / Demos
 # ------------------------------------------------------------------------------
 
 add_executable(mppi_demo
         src/main.cpp
 )
-target_link_libraries(mppi_demo PRIVATE mppi)
+
+target_link_libraries(mppi_demo
+        PRIVATE mppi
+)
 
 add_executable(pendulum_example
         examples/pendulum_example.cpp
 )
-target_link_libraries(pendulum_example PRIVATE mppi)
+
+target_link_libraries(pendulum_example
+        PRIVATE mppi
+)
 
 add_executable(smppi_pendulum_example
         examples/smppi_pendulum_example.cpp
 )
-target_link_libraries(smppi_pendulum_example PRIVATE mppi)
+
+target_link_libraries(smppi_pendulum_example
+        PRIVATE mppi
+)
 
 # ------------------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------------------
 
 if(MPPI_BUILD_TESTS)
+
     enable_testing()
 
     function(add_mppi_test test_name test_source)
@@ -80,20 +109,8 @@ if(MPPI_BUILD_TESTS)
     add_mppi_test(test_mppi_bounds        tests/test_mppi_bounds.cpp)
     add_mppi_test(test_mppi_1d            tests/test_mppi_1d.cpp)
     add_mppi_test(test_mppi_terminal      tests/test_mppi_terminal.cpp)
+
     add_mppi_test(test_smppi_basic        tests/test_smppi_basic.cpp)
     add_mppi_test(test_smppi_smoothness   tests/test_smppi_smoothness.cpp)
+
 endif()
-
-pybind11_add_module(mppi_cpp
-        bindings/python_bindings.cpp
-        src/MPPIController.cpp
-        src/SMPPIController.cpp
-)
-
-target_include_directories(mppi_cpp
-        PRIVATE ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_libraries(mppi_cpp
-        PRIVATE OpenMP::OpenMP_CXX Eigen3::Eigen
-)
