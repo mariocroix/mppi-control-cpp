@@ -18,6 +18,7 @@ endif()
 
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(pybind11 REQUIRED)
 
 # ------------------------------------------------------------------------------
 # Library
@@ -82,3 +83,17 @@ if(MPPI_BUILD_TESTS)
     add_mppi_test(test_smppi_basic        tests/test_smppi_basic.cpp)
     add_mppi_test(test_smppi_smoothness   tests/test_smppi_smoothness.cpp)
 endif()
+
+pybind11_add_module(mppi_cpp
+        bindings/python_bindings.cpp
+        src/MPPIController.cpp
+        src/SMPPIController.cpp
+)
+
+target_include_directories(mppi_cpp
+        PRIVATE ${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(mppi_cpp
+        PRIVATE OpenMP::OpenMP_CXX Eigen3::Eigen
+)

@@ -14,7 +14,7 @@ MPPIController::MPPIController(
       dynamics_(dynamics),
       runningCost_(runningCost),
       terminalCost_(terminalCost),
-      rng_(42),
+      rng_(cfg_.seed),
       normal_(0.0, 1.0) {
     initializeControl();
 }

@@ -19,7 +19,8 @@ namespace mppi {
 
             double angle = angleNormalize(theta);
 
-            return angle * angle + 0.1 * thetaDot * thetaDot + 0.001 * u * u;
+            // return angle * angle + 0.1 * thetaDot * thetaDot + 0.001 * u * u;
+			return angle * angle + 0.1 * thetaDot * thetaDot;
         }
 
     private:
