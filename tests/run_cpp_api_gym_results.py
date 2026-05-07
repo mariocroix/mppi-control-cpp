@@ -34,7 +34,7 @@ total_command_time = 0.0
 
 print("Initial state:", state)
 
-for step in range(40):
+for step in range(400):
     command_start = time.perf_counter()
     action = controller.command(state)
     elapsed = time.perf_counter() - command_start
