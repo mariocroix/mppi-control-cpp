@@ -3,6 +3,10 @@
 
 namespace mppi {
 
+namespace {
+constexpr int kOpenMpRolloutThreshold = 100;
+}
+
 SMPPIController::SMPPIController(
     const Config& config,
     const Dynamics& dynamics,
@@ -16,9 +20,18 @@ SMPPIController::SMPPIController(
       deltaT_(deltaT) {
     actionSequence_ = Matrix::Zero(config.T, config.nu);
     U_ = Matrix::Zero(config.T, config.nu);  // lifted control space
+    sampledActionsData_.assign(sampleSize() * cfg_.K, 0.0);
 }
 
-double SMPPIController::smoothnessCost(const Matrix& actions) const {
+SMPPIController::MatrixView SMPPIController::sampledActions(int k) {
+    return MatrixView(sampledActionsData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
+}
+
+SMPPIController::ConstMatrixView SMPPIController::sampledActions(int k) const {
+    return ConstMatrixView(sampledActionsData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
+}
+
+double SMPPIController::smoothnessCost(ConstMatrixView actions) const {
     double total = 0.0;
 
     for (int t = 1; t < actions.rows(); ++t) {
@@ -47,10 +60,15 @@ void SMPPIController::shiftNominalTrajectory() {
 Vector SMPPIController::command(const Vector& state) {
     shiftNominalTrajectory();
 
-    std::vector<Matrix> sampledControls(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
-    std::vector<Matrix> sampledActions(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
+    const std::size_t requiredSize = sampleSize() * static_cast<std::size_t>(cfg_.K);
+    if (sampledActionsData_.size() != requiredSize) {
+        sampledActionsData_.assign(requiredSize, 0.0);
+    }
 
     for (int k = 0; k < cfg_.K; ++k) {
+        auto actions = sampledActions(k);
+        auto noise = noiseSample(k);
+
         for (int t = 0; t < cfg_.T; ++t) {
             Vector eps(cfg_.nu);
 
@@ -63,21 +81,30 @@ Vector SMPPIController::command(const Vector& state) {
             Vector control = U_.row(t).transpose() + eps;
             control = clampControl(control);
 
-            sampledControls[k].row(t) = control.transpose();
-
             Vector action = actionSequence_.row(t).transpose() + control * deltaT_;
             action = clampControl(action);
 
-            sampledActions[k].row(t) = action.transpose();
+            actions.row(t) = action.transpose();
 
-            noise_[k].row(t) = (control - U_.row(t).transpose()).transpose();
+            noise.row(t) = (control - U_.row(t).transpose()).transpose();
         }
     }
 
-    #pragma omp parallel for
-    for (int k = 0; k < cfg_.K; ++k) {
-        costs_(k) = rolloutCost(state, sampledActions[k]);
-        costs_(k) += smoothnessCost(sampledActions[k]);
+    if (cfg_.K >= kOpenMpRolloutThreshold) {
+        #pragma omp parallel for
+        for (int k = 0; k < cfg_.K; ++k) {
+            const auto actions =
+                static_cast<const SMPPIController*>(this)->sampledActions(k);
+            costs_(k) = rolloutCost(state, actions);
+            costs_(k) += smoothnessCost(actions);
+        }
+    } else {
+        for (int k = 0; k < cfg_.K; ++k) {
+            const auto actions =
+                static_cast<const SMPPIController*>(this)->sampledActions(k);
+            costs_(k) = rolloutCost(state, actions);
+            costs_(k) += smoothnessCost(actions);
+        }
     }
 
     computeWeights();
@@ -86,7 +113,7 @@ Vector SMPPIController::command(const Vector& state) {
         Vector delta = Vector::Zero(cfg_.nu);
 
         for (int k = 0; k < cfg_.K; ++k) {
-            delta += weights_(k) * noise_[k].row(t).transpose();
+            delta += weights_(k) * noiseSample(k).row(t).transpose();
         }
 
         Vector updatedControl = U_.row(t).transpose() + delta;
@@ -107,6 +134,7 @@ void SMPPIController::reset() {
     MPPIController::reset();
     actionSequence_ = Matrix::Zero(cfg_.T, cfg_.nu);
     U_ = Matrix::Zero(cfg_.T, cfg_.nu);
+    sampledActionsData_.assign(sampleSize() * cfg_.K, 0.0);
 }
 
 const Matrix& SMPPIController::getActionSequence() const {

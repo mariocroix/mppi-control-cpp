@@ -4,6 +4,10 @@
 
 namespace mppi {
 
+namespace {
+constexpr int kOpenMpRolloutThreshold = 100;
+}
+
 MPPIController::MPPIController(
     const Config& config,
     const Dynamics& dynamics,
@@ -22,11 +26,35 @@ MPPIController::MPPIController(
 void MPPIController::initializeControl() {
     U_ = Matrix::Zero(cfg_.T, cfg_.nu);
 
-    noise_.assign(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
-    perturbed_.assign(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
+    noiseData_.assign(sampleSize() * cfg_.K, 0.0);
+    perturbedData_.assign(sampleSize() * cfg_.K, 0.0);
 
     costs_ = Vector::Zero(cfg_.K);
     weights_ = Vector::Zero(cfg_.K);
+}
+
+std::size_t MPPIController::sampleSize() const {
+    return static_cast<std::size_t>(cfg_.T) * static_cast<std::size_t>(cfg_.nu);
+}
+
+std::size_t MPPIController::sampleOffset(int k) const {
+    return static_cast<std::size_t>(k) * sampleSize();
+}
+
+MPPIController::MatrixView MPPIController::noiseSample(int k) {
+    return MatrixView(noiseData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
+}
+
+MPPIController::ConstMatrixView MPPIController::noiseSample(int k) const {
+    return ConstMatrixView(noiseData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
+}
+
+MPPIController::MatrixView MPPIController::perturbedSample(int k) {
+    return MatrixView(perturbedData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
+}
+
+MPPIController::ConstMatrixView MPPIController::perturbedSample(int k) const {
+    return ConstMatrixView(perturbedData_.data() + sampleOffset(k), cfg_.T, cfg_.nu);
 }
 
 Vector MPPIController::clampControl(const Vector& u) const {
@@ -44,6 +72,9 @@ Vector MPPIController::clampControl(const Vector& u) const {
 
 void MPPIController::sampleNoise() {
     for (int k = 0; k < cfg_.K; ++k) {
+        auto noise = noiseSample(k);
+        auto perturbed = perturbedSample(k);
+
         for (int t = 0; t < cfg_.T; ++t) {
             Vector eps(cfg_.nu);
 
@@ -53,18 +84,18 @@ void MPPIController::sampleNoise() {
                 eps(i) = mean + stddev * normal_(rng_);
             }
 
-            noise_[k].row(t) = eps.transpose();
+            noise.row(t) = eps.transpose();
 
             Vector u = U_.row(t).transpose() + eps;
             u = clampControl(u);
-            perturbed_[k].row(t) = u.transpose();
+            perturbed.row(t) = u.transpose();
         }
     }
 }
 
 double MPPIController::rolloutCost(
     const Vector& initialState,
-    const Matrix& actionSequence
+    ConstMatrixView actionSequence
 ) const {
     Vector state = initialState;
     double totalCost = 0.0;
@@ -101,7 +132,7 @@ void MPPIController::updateNominalTrajectory() {
         Vector delta = Vector::Zero(cfg_.nu);
 
         for (int k = 0; k < cfg_.K; ++k) {
-            delta += weights_(k) * noise_[k].row(t).transpose();
+            delta += weights_(k) * noiseSample(k).row(t).transpose();
         }
 
         Vector updated = U_.row(t).transpose() + delta;
@@ -114,9 +145,21 @@ Vector MPPIController::command(const Vector& state) {
     shiftNominalTrajectory();
     sampleNoise();
 
-    #pragma omp parallel for
-    for (int k = 0; k < cfg_.K; ++k) {
-        costs_(k) = rolloutCost(state, perturbed_[k]);
+    if (cfg_.K >= kOpenMpRolloutThreshold) {
+        #pragma omp parallel for
+        for (int k = 0; k < cfg_.K; ++k) {
+            costs_(k) = rolloutCost(
+                state,
+                static_cast<const MPPIController*>(this)->perturbedSample(k)
+            );
+        }
+    } else {
+        for (int k = 0; k < cfg_.K; ++k) {
+            costs_(k) = rolloutCost(
+                state,
+                static_cast<const MPPIController*>(this)->perturbedSample(k)
+            );
+        }
     }
 
     computeWeights();
@@ -149,8 +192,8 @@ void MPPIController::changeHorizon(int newHorizon) {
     cfg_.T = newHorizon;
     U_ = newU;
 
-    noise_.assign(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
-    perturbed_.assign(cfg_.K, Matrix::Zero(cfg_.T, cfg_.nu));
+    noiseData_.assign(sampleSize() * cfg_.K, 0.0);
+    perturbedData_.assign(sampleSize() * cfg_.K, 0.0);
     costs_ = Vector::Zero(cfg_.K);
     weights_ = Vector::Zero(cfg_.K);
 }

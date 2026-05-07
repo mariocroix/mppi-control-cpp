@@ -26,8 +26,12 @@ namespace mppi {
         double deltaT_;
 
         Matrix actionSequence_;  // actual commanded actions, T x nu
+        std::vector<double> sampledActionsData_;
 
-        double smoothnessCost(const Matrix& actions) const;
+        MatrixView sampledActions(int k);
+        ConstMatrixView sampledActions(int k) const;
+
+        double smoothnessCost(ConstMatrixView actions) const;
     };
 
 }  // namespace mppi
