@@ -183,34 +183,6 @@ Recent local benchmark results for the pendulum workload with horizon `T=15`:
 
 For the included K=200 CPU sweep, average command time is approximately `0.006 s` per command after warmup-length effects. Numerical outputs matched the previous controller behavior during validation.
 
-## Benchmark Plots
-
-Generated figures are stored in `mppi_comparison/cpu_based/plots/`.
-
-### Runtime
-
-![Runtime comparison](mppi_comparison/cpu_based/plots/runtime_bar_comparison.png)
-
-![Step time comparison](mppi_comparison/cpu_based/plots/step_time_comparison.png)
-
-![Sweep average time](mppi_comparison/cpu_based/plots/sweep_average_time.png)
-
-### Pendulum Trajectory
-
-![Theta comparison](mppi_comparison/cpu_based/plots/theta_comparison.png)
-
-![Theta dot comparison](mppi_comparison/cpu_based/plots/theta_dot_comparison.png)
-
-![Action comparison](mppi_comparison/cpu_based/plots/action_comparison.png)
-
-![Cost comparison](mppi_comparison/cpu_based/plots/cost_comparison.png)
-
-### Sweep Outputs
-
-![Sweep final cost](mppi_comparison/cpu_based/plots/sweep_final_cost.png)
-
-![Sweep total time](mppi_comparison/cpu_based/plots/sweep_total_time.png)
-
 ## Technologies Used
 
 - C++17
