@@ -1,10 +1,27 @@
 import time
 import csv
+from pathlib import Path
+
 import numpy as np
 import mppi_cpp as m
 
 
 EPISODE_LENGTHS = [40, 80, 120, 160, 200]
+OUTPUT_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "mppi_comparison"
+    / "cpu_based"
+    / "data"
+    / "cpp_api_3_call_cpu_sweep.csv"
+)
+FIELDNAMES = [
+    "episode_steps",
+    "total_command_time",
+    "average_command_time",
+    "final_theta",
+    "final_theta_dot",
+    "final_cost",
+]
 
 
 def make_controller():
@@ -15,6 +32,7 @@ def make_controller():
     cfg.T = 15
     cfg.lambda_ = 1.0
     cfg.uScale = 1.0
+    cfg.uPerCommand = 1
 
     cfg.uMin = np.array([-2.0])
     cfg.uMax = np.array([2.0])
@@ -42,12 +60,11 @@ for episode_steps in EPISODE_LENGTHS:
         start = time.perf_counter()
 
         action = controller.command(state)
+        state = dynamics.propagate(state, action, step)
+        final_cost = cost.evaluate(state, action, step)
 
         elapsed = time.perf_counter() - start
         total_time += elapsed
-
-        state = dynamics.propagate(state, action, 0)
-        final_cost = cost.evaluate(state, action, 0)
 
     summary_rows.append({
         "episode_steps": episode_steps,
@@ -58,21 +75,12 @@ for episode_steps in EPISODE_LENGTHS:
         "final_cost": float(final_cost),
     })
 
-with open("cpp_api_cpu_sweep.csv", "w", newline="") as f:
-    writer = csv.DictWriter(
-        f,
-        fieldnames=[
-            "episode_steps",
-            "total_command_time",
-            "average_command_time",
-            "final_theta",
-            "final_theta_dot",
-            "final_cost",
-        ],
-    )
+OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+with OUTPUT_PATH.open("w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
     writer.writeheader()
     writer.writerows(summary_rows)
 
-print("Saved cpp_api_cpu_sweep.csv")
+print(f"Saved {OUTPUT_PATH}")
 for row in summary_rows:
     print(row)

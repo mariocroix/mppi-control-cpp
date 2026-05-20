@@ -112,5 +112,6 @@ if(MPPI_BUILD_TESTS)
 
     add_mppi_test(test_smppi_basic        tests/test_smppi_basic.cpp)
     add_mppi_test(test_smppi_smoothness   tests/test_smppi_smoothness.cpp)
+    add_mppi_test(benchmark_cpp_native tests/benchmark_cpp_native.cpp)
 
 endif()
